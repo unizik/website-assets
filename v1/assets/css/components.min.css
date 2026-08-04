@@ -99,7 +99,7 @@
 .btn-outline {
     background: 0 0;
     border: 1px solid var(--orange);
-    color: var(--orange);
+    color: var(--orange)!important;
     text-decoration: none!important;
 }
 .btn-outline:hover {
