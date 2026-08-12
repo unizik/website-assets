@@ -14,6 +14,26 @@ function escapeHtml(str) {
   ));
 }
 
+// Live title -> slug autofill for the News admin forms (main + faculty),
+// called from the Title field's oninput. On create (isEdit=false), a short
+// random suffix is appended so the slug is virtually collision-proof from
+// the moment it's typed, rather than relying on a "-2", "-3", ... suggestion
+// after the fact. On edit, the suffix is omitted and only the plain
+// slugified title is written, so retyping an existing article's title never
+// silently randomizes its already-published URL. The suffix is cosmetic
+// only - News::validateSlug() and the DB's uq_news_slug_scope unique
+// constraint (migrations/031_news_slug_scope_unique.sql) remain the actual
+// source of truth server-side; this never touches PHP-side slug logic.
+function autoSlugify(titleValue, slugFieldId, isEdit) {
+  const slugField = document.getElementById(slugFieldId);
+  if (!slugField) return;
+
+  const base = titleValue.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (base === '') { slugField.value = ''; return; }
+
+  slugField.value = isEdit ? base : `${base}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 // ─── 1. Admin sidebar active link ────────────────────────────────────────────
 function initAdminNav() {
   const currentPath = window.location.pathname;
