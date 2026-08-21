@@ -1,1 +1,147 @@
-"use strict";function initContactForm(){const t=document.querySelector("[data-contact-form]");t&&t.addEventListener("submit",async e=>{var r;e.preventDefault(),""!==t.querySelector('[name="website"]')?.value?showSuccess(t):({valid:e,errors:r}=validate(t),clearErrors(t),e?await submitForm(t):(displayErrors(t,r),t.querySelector("[data-field-error]:not(:empty)")?.previousElementSibling?.focus()))})}function validate(e){var e=new FormData(e),r={},t=(e.get("name")??"").trim(),t=(t?t.length<2?r.name="Name must be at least 2 characters.":100<t.length&&(r.name="Name must be 100 characters or fewer."):r.name="Please enter your name.",(e.get("email")??"").trim()),t=(t?/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)||(r.email="Please enter a valid email address."):r.email="Please enter your email address.",(e.get("message")??"").trim()),t=(t?t.length<10?r.message="Message must be at least 10 characters.":2e3<t.length&&(r.message="Message must be 2000 characters or fewer."):r.message="Please enter a message.",(e.get("subject")??"").trim());return 300<t.length&&(r.subject="Subject must be 300 characters or fewer."),{valid:0===Object.keys(r).length,errors:r}}async function submitForm(r){var e=r.querySelector('[type="submit"]');try{e&&(e.disabled=!0,e.textContent="Sending…");var t=await fetch(r.action,{method:"POST",headers:{"X-Requested-With":"XMLHttpRequest"},body:new URLSearchParams(new FormData(r))}),a=await t.json().catch(()=>({}));t.ok&&!1!==a.success?(showSuccess(r),r.reset()):showFormError(r,a.message??"Something went wrong. Please try again.")}catch(e){console.error("[contact] Submit failed:",e),showFormError(r,"Network error. Please check your connection and try again.")}finally{e&&(e.disabled=!1,e.textContent="Send Message")}}function clearErrors(e){e.querySelectorAll("[data-field-error]").forEach(e=>{e.textContent="",e.hidden=!0}),e.querySelectorAll(".form-input--error, .form-textarea--error").forEach(e=>{e.classList.remove("form-input--error","form-textarea--error")})}function displayErrors(a,e){Object.entries(e).forEach(([e,r])=>{var t=a.querySelector(`[data-field-error="${e}"]`),e=a.querySelector(`[name="${e}"]`);t&&(t.textContent=r,t.hidden=!1),e?.classList.add("form-input--error"),e?.setAttribute("aria-invalid","true")})}function showSuccess(e){var r=e.querySelector(".form-success")??e.closest("[data-contact-section]")?.querySelector(".form-success"),t=e.querySelector(".form-error")??e.closest("[data-contact-section]")?.querySelector(".form-error");r&&(r.hidden=!1,r.scrollIntoView({behavior:"smooth",block:"center"})),t&&(t.hidden=!0),e.hidden=!0}function showFormError(e,r){e=e.querySelector(".form-error")??e.closest("[data-contact-section]")?.querySelector(".form-error");e&&(e.textContent=r,e.hidden=!1,e.scrollIntoView({behavior:"smooth",block:"center"}))}document.addEventListener("DOMContentLoaded",initContactForm);
+// public/assets/js/contact.js
+'use strict';
+
+// ─── 1. Init ───────────────────────────────────────────────────────────────────
+function initContactForm() {
+  const form = document.querySelector('[data-contact-form]');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // ── Honeypot: invisible field must be empty ───────────────────────────
+    const honeypot = form.querySelector('[name="website"]');
+    if (honeypot?.value !== '') {
+      // Silent reject - bots get no feedback
+      showSuccess(form);
+      return;
+    }
+
+    const { valid, errors } = validate(form);
+
+    clearErrors(form);
+
+    if (!valid) {
+      displayErrors(form, errors);
+      // Move focus to the first errored field
+      const firstError = form.querySelector('[data-field-error]:not(:empty)');
+      firstError?.previousElementSibling?.focus();
+      return;
+    }
+
+    await submitForm(form);
+  });
+}
+
+// ─── 2. Validate ──────────────────────────────────────────────────────────────
+function validate(form) {
+  const data   = new FormData(form);
+  const errors = {};
+
+  // name
+  const name = (data.get('name') ?? '').trim();
+  if (!name)              errors.name = 'Please enter your name.';
+  else if (name.length < 2)  errors.name = 'Name must be at least 2 characters.';
+  else if (name.length > 100) errors.name = 'Name must be 100 characters or fewer.';
+
+  // email
+  const email = (data.get('email') ?? '').trim();
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email)             errors.email = 'Please enter your email address.';
+  else if (!emailRe.test(email)) errors.email = 'Please enter a valid email address.';
+
+  // message
+  const message = (data.get('message') ?? '').trim();
+  if (!message)                   errors.message = 'Please enter a message.';
+  else if (message.length < 10)   errors.message = 'Message must be at least 10 characters.';
+  else if (message.length > 2000) errors.message = 'Message must be 2000 characters or fewer.';
+
+  // Optional subject - no constraint beyond length
+  const subject = (data.get('subject') ?? '').trim();
+  if (subject.length > 300) errors.subject = 'Subject must be 300 characters or fewer.';
+
+  return { valid: Object.keys(errors).length === 0, errors };
+}
+
+// ─── 3. Submit ────────────────────────────────────────────────────────────────
+async function submitForm(form) {
+  const submit = form.querySelector('[type="submit"]');
+
+  try {
+    if (submit) { submit.disabled = true; submit.textContent = 'Sending…'; }
+
+    const res = await fetch(form.action, {
+      method:  'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body:    new URLSearchParams(new FormData(form)),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.success !== false) {
+      showSuccess(form);
+      form.reset();
+    } else {
+      const msg = data.message ?? 'Something went wrong. Please try again.';
+      showFormError(form, msg);
+      // Turnstile tokens are single-use - reset the widget so a retry gets a fresh one.
+      window.turnstile?.reset();
+    }
+  } catch (err) {
+    console.error('[contact] Submit failed:', err);
+    showFormError(form, 'Network error. Please check your connection and try again.');
+    window.turnstile?.reset();
+  } finally {
+    if (submit) { submit.disabled = false; submit.textContent = 'Send Message'; }
+  }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function clearErrors(form) {
+  form.querySelectorAll('[data-field-error]').forEach((el) => {
+    el.textContent = '';
+    el.hidden = true;
+  });
+  form.querySelectorAll('.form-input--error, .form-textarea--error').forEach((el) => {
+    el.classList.remove('form-input--error', 'form-textarea--error');
+  });
+}
+
+function displayErrors(form, errors) {
+  Object.entries(errors).forEach(([field, message]) => {
+    const errorEl = form.querySelector(`[data-field-error="${field}"]`);
+    const inputEl = form.querySelector(`[name="${field}"]`);
+
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.hidden      = false;
+    }
+    inputEl?.classList.add('form-input--error');
+    inputEl?.setAttribute('aria-invalid', 'true');
+  });
+}
+
+function showSuccess(form) {
+  const successDiv = form.querySelector('.form-success')
+    ?? form.closest('[data-contact-section]')?.querySelector('.form-success');
+  const errorDiv   = form.querySelector('.form-error')
+    ?? form.closest('[data-contact-section]')?.querySelector('.form-error');
+
+  if (successDiv) { successDiv.hidden = false; successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  if (errorDiv)   errorDiv.hidden = true;
+  form.hidden = true;
+}
+
+function showFormError(form, message) {
+  const errorDiv = form.querySelector('.form-error')
+    ?? form.closest('[data-contact-section]')?.querySelector('.form-error');
+
+  if (errorDiv) {
+    errorDiv.textContent = message;
+    errorDiv.hidden = false;
+    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', initContactForm);
