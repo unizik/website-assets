@@ -779,18 +779,86 @@
 .admin-flash.success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
 .admin-flash.error   { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
 
+/* ─── Mobile sidebar toggle (hamburger button + drawer backdrop) ────────────
+   Hidden/inert above 1024px - see .admin-layout below for the drawer itself.
+   Fixed rather than living inside .admin-topbar because that header is
+   written by ~40 separate admin/*.php templates; one fixed control in the
+   shared sidebar-include markup (main/faculty/unit-admin-sidebar.php) covers
+   all of them instead of editing every page. ─────────────────────────────── */
+.admin-sidebar-toggle {
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 250;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.15);
+  font-size: 18px;
+  line-height: 1;
+  color: #0F1433;
+  cursor: pointer;
+}
+.admin-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: rgba(15,20,51,0.55);
+}
+.admin-sidebar-backdrop.is-open { display: block; }
+
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .admin-layout       { grid-template-columns: 1fr; }
-  .admin-sidebar      { display: none; }
+  .admin-layout    { grid-template-columns: 1fr; }
+  .admin-sidebar-toggle { display: flex; }
+
+  /* Sidebar becomes an off-canvas drawer instead of vanishing outright -
+     it used to be display:none with no replacement, which left every admin
+     locked out of navigation on phone/tablet. */
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 200;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 24px rgba(0,0,0,0.25);
+  }
+  .admin-sidebar.is-open { transform: translateX(0); }
+
+  .admin-topbar       { padding-left: 60px; flex-wrap: wrap; height: auto; min-height: 64px; }
+  .admin-topbar-actions { flex-wrap: wrap; }
+
   .admin-stats-row    { grid-template-columns: repeat(2, 1fr); }
-  .form-row           { grid-template-columns: 1fr; }
+  .form-row,
+  .form-grid-2        { grid-template-columns: 1fr; }
+  .settings-grid-4    { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Background stays put while the drawer is open, so a swipe/scroll behind it
+   can't move the page underneath. */
+body.admin-sidebar-open { overflow: hidden; }
 
 @media (max-width: 768px) {
   .admin-page-body    { padding: 16px; }
   .admin-stats-row    { grid-template-columns: 1fr; }
   .media-grid         { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .settings-grid-4    { grid-template-columns: 1fr; }
+  .admin-table-wrap   { -webkit-overflow-scrolling: touch; }
+  .admin-card-header  { flex-wrap: wrap; gap: 10px; }
+  .media-library-toolbar { padding: 12px 16px; }
+  .media-picker-panel { padding: 14px 16px; }
+  .media-preview-backdrop { padding: 12px; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
