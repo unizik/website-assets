@@ -1083,9 +1083,46 @@ function initSeoFieldHints() {
   });
 }
 
+// ─── Mobile sidebar drawer ──────────────────────────────────────────────────
+// The sidebar is a fixed off-canvas drawer below 1024px (admin.css). This
+// wires the hamburger button + backdrop markup that main/faculty/unit
+// -admin-sidebar.php all emit identically, so one function covers every
+// admin page regardless of tenant.
+function initAdminSidebarToggle() {
+  const toggle   = document.querySelector('.admin-sidebar-toggle');
+  const sidebar  = document.querySelector('.admin-sidebar');
+  const backdrop = document.querySelector('.admin-sidebar-backdrop');
+  if (!toggle || !sidebar || !backdrop) return;
+
+  const close = () => {
+    sidebar.classList.remove('is-open');
+    backdrop.classList.remove('is-open');
+    document.body.classList.remove('admin-sidebar-open');
+    toggle.setAttribute('aria-expanded', 'false');
+  };
+  const open = () => {
+    sidebar.classList.add('is-open');
+    backdrop.classList.add('is-open');
+    document.body.classList.add('admin-sidebar-open');
+    toggle.setAttribute('aria-expanded', 'true');
+  };
+
+  toggle.addEventListener('click', () => (
+    sidebar.classList.contains('is-open') ? close() : open()
+  ));
+  backdrop.addEventListener('click', close);
+  // Closing on nav-link tap matters here specifically because the drawer
+  // overlays the content instead of pushing it - left open, it would hide
+  // the very page the admin just navigated to on next paint.
+  sidebar.querySelectorAll('.admin-nav-link').forEach((link) => link.addEventListener('click', close));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  window.addEventListener('resize', () => { if (window.innerWidth > 1024) close(); });
+}
+
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initAdminNav();
+  initAdminSidebarToggle();
   initDropzone();
   initStaticImageDropzone();
   initMediaLibrary();
