@@ -202,12 +202,71 @@
 .article-prose ol { list-style: decimal; }
 .article-prose li { margin-bottom: 6px; line-height: 1.7; }
 .article-prose img { max-width: 100%; border-radius: var(--radius-lg); margin: 24px 0; }
-.article-prose table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.95em; display: block; overflow-x: auto; }
+/* Tables (works on light and dark pages; the HTML border="1" attribute is overridden) */
+.article-prose table {
+  width: 100%;
+  margin: 28px 0;
+  border: 1px solid rgba(128,128,128,0.35);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 15px;
+  line-height: 1.55;
+}
 .article-prose th,
-.article-prose td { border: 1px solid #c9ccd1; padding: 8px 10px; vertical-align: top; text-align: left; }
-.article-prose th { background: rgba(0,0,0,0.05); font-weight: 700; }
+.article-prose td {
+  border: 0;
+  border-bottom: 1px solid rgba(128,128,128,0.25);
+  border-right: 1px solid rgba(128,128,128,0.18);
+  padding: 12px 16px;
+  vertical-align: middle;
+  text-align: left;
+}
+.article-prose th:last-child,
+.article-prose td:last-child { border-right: 0; }
+.article-prose tr:last-child > td { border-bottom: 0; }
+
+/* Header rows */
+.article-prose thead th {
+  background: rgba(128,128,128,0.28);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+.article-prose thead tr:first-child th {
+  background: var(--orange);
+  color: #fff;
+  text-align: center;
+  font-size: 1.05em;
+  padding: 14px 16px;
+}
+
+/* Striped body rows */
+.article-prose tbody tr:nth-child(odd)  > td { background: rgba(128,128,128,0.08); }
+.article-prose tbody tr:nth-child(even) > td { background: rgba(128,128,128,0.16); }
+.article-prose tbody tr:hover > td { background: rgba(128,128,128,0.26); }
+
+/* Time column */
+.article-prose tbody td:first-child:not([colspan]) { white-space: nowrap; font-weight: 600; }
+
+/* Full-width break rows (Lunch / Tea) */
+.article-prose td[colspan] {
+  text-align: center;
+  background: rgba(232,79,16,0.16) !important;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
 .article-prose td img,
 .article-prose th img { margin: 4px 0; border-radius: 4px; max-width: 100%; height: auto; }
+
+/* Small screens: let wide tables scroll sideways */
+@media (max-width: 640px) {
+  .article-prose table { display: block; overflow-x: auto; font-size: 14px; }
+  .article-prose th,
+  .article-prose td { padding: 10px 12px; }
+}
 .article-prose blockquote {
   border-left: 3px solid var(--orange);
   padding: 12px 0 12px 20px;
