@@ -911,8 +911,28 @@ function initTinyMCE() {
     selector: '[data-editor]',
     plugins: ['link', 'image', 'lists', 'table', 'code'],
     toolbar:
-      'undo redo | formatselect | bold italic | link image | bullist numlist | code',
-    menubar: false,
+      'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | ' +
+      'link image table | bullist numlist blockquote | removeformat | code',
+    toolbar_mode: 'wrap',
+    block_formats: 'Paragraph=p; Heading 2=h2; Heading 3=h3; Heading 4=h4',
+    menubar: 'table',
+    min_height: 400,
+    table_toolbar:
+      'tableprops tabledelete | tableinsertrowbefore tableinsertrowafter tabledeleterow | ' +
+      'tableinsertcolbefore tableinsertcolafter tabledeletecol | tablemergecells tablesplitcells',
+    table_default_attributes: { border: '1' },
+    table_default_styles: { width: '100%', 'border-collapse': 'collapse' },
+    table_advtab: false,
+    table_cell_advtab: false,
+    table_row_advtab: false,
+    paste_data_images: true,
+    automatic_uploads: true,
+    image_advtab: false,
+    relative_urls: false,
+    remove_script_host: false,
+    convert_urls: false,
+    content_style:
+      'table{border-collapse:collapse;width:100%} td,th{border:1px solid #999;padding:6px;vertical-align:top} img{max-width:100%;height:auto}',
     content_css:  apiUrl('/assets/css/global.css'),
     body_class:   'article-prose',
     images_upload_url: apiUrl('/api/admin/media-upload'),
